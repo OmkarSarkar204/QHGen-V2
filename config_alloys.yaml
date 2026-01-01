@@ -1,0 +1,30 @@
+# QHGen Alloy Safety & Search Space Definition
+project_name: "QHGen-HER-Catalyst-Search"
+
+# 1. ALLOWED ELEMENTS (The "Safe List")
+# Selected for: Low Toxicity, High Earth Abundance, Catalytic Potential
+active_metals:
+  - Ni  # Nickel: Base substrate, cheap
+  - Fe  # Iron: Enhances activity in alkaline HER
+  - Co  # Cobalt: Stability enhancer
+  - Mo  # Molybdenum: excellent HER activity in MoS2-like sites
+  - W   # Tungsten: Acid stability
+  - Cu  # Copper: Low cost conductive filler
+  - Ti  # Titanium: Structural stability
+
+# 2. FORBIDDEN ELEMENTS (The "Block List")
+# AI will auto-reject any composition containing these
+blacklisted_elements:
+  - Pb  # Toxic
+  - Cd  # Toxic
+  - Hg  # Toxic
+  - As  # Toxic
+  - U   # Radioactive
+  - Th  # Radioactive
+
+# 3. INITIAL SEARCH ZONES (Seed Compositions)
+# The AI starts its evolutionary search near these known regions
+seed_alloys:
+  - {elements: ["Ni", "Fe"], ratios: [0.8, 0.2]}   # Industrial Standard
+  - {elements: ["Ni", "Mo"], ratios: [0.9, 0.1]}   # High Activity
+  - {elements: ["Co", "W", "Fe"], ratios: [0.4, 0.4, 0.2]} # Exploratory
