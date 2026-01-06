@@ -1,58 +1,77 @@
 import os
 import csv
 import json
-import time
+import logging
 from datetime import datetime
-from ase.io import write
 
 class ResearchLogger:
-    def __init__(self, campaign_name="experiment"):
-        # Create a unique timestamped folder for this entire run
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        self.base_path = f"qhgen-v3/data/lab_notebook/{campaign_name}_{timestamp}"
-        os.makedirs(self.base_path, exist_ok=True)
+    def __init__(self, campaign_name="Default_Campaign"):
+        self.master_db_path = r"C:\Users\Omkar\Desktop\QHGen-V2\qhgen-v3\data\knowledge_bank\active_learning_db.csv"
+        lab_notebook_root = r"C:\Users\Omkar\Desktop\QHGen-V2\qhgen-v3\data\lab_notebook"
         
-        print(f"📂 Research Log Initialized: {self.base_path}")
-
-    def log_generation(self, gen_id, population_data):
-        """
-        Saves all data for a specific generation.
-        population_data: List of dicts containing {composition, energy, uncertainty, structure}
-        """
-        gen_folder = os.path.join(self.base_path, f"gen_{gen_id}")
-        struct_folder = os.path.join(gen_folder, "structures")
-        os.makedirs(struct_folder, exist_ok=True)
-
-        csv_path = os.path.join(gen_folder, "data_summary.csv")
+        self.timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        campaign_folder = f"{campaign_name}_{self.timestamp}"
         
-        # 1. Save CSV Summary
-        with open(csv_path, 'w', newline='') as f:
-            writer = csv.writer(f)
-            # Header
-            writer.writerow(["ID", "Composition", "Predicted_Energy", "Uncertainty", "Fitness_Score", "Status"])
+        self.campaign_dir = os.path.join(lab_notebook_root, campaign_folder)
+        
+        os.makedirs(self.campaign_dir, exist_ok=True)
+        os.makedirs(os.path.dirname(self.master_db_path), exist_ok=True)
+        
+        self.base_path = self.campaign_dir
+        print(f"DEBUG: Logger initialized at: {self.campaign_dir}")
+        print(f"DEBUG: Master DB targeted at: {self.master_db_path}")
+
+    def log(self, message):
+        print(message)
+        log_file = os.path.join(self.campaign_dir, "session.log")
+        
+        os.makedirs(os.path.dirname(log_file), exist_ok=True)
+        
+        with open(log_file, "a", encoding="utf-8") as f:
+            f.write(f"[{datetime.now().strftime('%H:%M:%S')}] {message}\n")
+
+    def log_generation(self, gen_id, best_candidate):
+        energy = best_candidate.get('quantum_energy')
+        if energy is None:
+            energy = best_candidate.get('predicted_energy', 0.0)
+        
+        composition = best_candidate.get('composition', {})
+        
+        msg = f"GEN {gen_id} COMPLETE | Best: {composition} | E={energy:.4f} eV"
+        self.log(msg)
+
+    def log_quantum_result(self, gen_id, candidate_id, quantum_energy):
+        msg = f"GEN {gen_id} | Candidate {candidate_id} | Quantum Truth: {quantum_energy:.4f} eV"
+        self.log(msg)
+
+    def log_candidate(self, candidate_data):
+        json_path = os.path.join(self.campaign_dir, "candidates.json")
+        data_to_save = candidate_data.copy()
+        
+        for k, v in data_to_save.items():
+            if hasattr(v, 'item'):
+                data_to_save[k] = v.item()
             
-            for i, cand in enumerate(population_data):
-                # Save structure file (XYZ) for visual analysis later
-                filename = f"cand_{i}.xyz"
-                write(os.path.join(struct_folder, filename), cand['structure'])
-                
-                # Write row
-                comp_str = str(cand['composition'])
-                writer.writerow([
-                    i, 
-                    comp_str, 
-                    f"{cand.get('predicted_energy', 0):.4f}",
-                    f"{cand.get('uncertainty', 0):.4f}",
-                    f"{cand.get('fitness', 0):.4f}",
-                    "Analyzed"
-                ])
-        
-        # 2. Save Metadata (Hyperparameters)
-        with open(os.path.join(gen_folder, "meta.json"), 'w') as f:
-            json.dump({"timestamp": time.time(), "count": len(population_data)}, f)
+        with open(json_path, "a") as f:
+            f.write(json.dumps(data_to_save) + "\n")
 
-    def log_quantum_result(self, gen_id, candidate_id, result):
-        """Logs the expensive Quantum VQE result separately"""
-        log_file = os.path.join(self.base_path, "quantum_validation_log.txt")
-        with open(log_file, "a") as f:
-            f.write(f"GEN {gen_id} | ID {candidate_id} | Truth: {result} eV\n")
+        try:
+            energy = candidate_data.get('quantum_energy')
+            if energy is None:
+                energy = candidate_data.get('energy', 0.0)
+            
+            comp_str = json.dumps(candidate_data.get('composition', {}))
+            unc = candidate_data.get('uncertainty', 0.0)
+            c_id = candidate_data.get('id', 'unknown')
+            
+            with open(self.master_db_path, 'a', newline='') as f:
+                writer = csv.writer(f)
+                writer.writerow([c_id, comp_str, energy, unc, self.timestamp])
+                
+            with open(self.master_db_path, 'r') as f:
+                idx = sum(1 for line in f)
+                
+            self.log(f"[Memory] Candidate {c_id} saved to Knowledge Bank (Index {idx}).")
+            
+        except Exception as e:
+            self.log(f"Error saving to Master DB: {e}")

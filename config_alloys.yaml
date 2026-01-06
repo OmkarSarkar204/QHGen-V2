@@ -4,13 +4,15 @@ project_name: "QHGen-HER-Catalyst-Search"
 # 1. ALLOWED ELEMENTS (The "Safe List")
 # Selected for: Low Toxicity, High Earth Abundance, Catalytic Potential
 active_metals:
-  - Ni  # Nickel: Base substrate, cheap
-  - Fe  # Iron: Enhances activity in alkaline HER
-  - Co  # Cobalt: Stability enhancer
-  - Mo  # Molybdenum: excellent HER activity in MoS2-like sites
-  - W   # Tungsten: Acid stability
-  - Cu  # Copper: Low cost conductive filler
-  - Ti  # Titanium: Structural stability
+  - Ni
+  - Fe
+  - Co
+  - Mo
+  - W
+  - Cu # <--- Ensure this is here
+  - Ti
+  - Au # <--- ADD THIS LINE
+  - Pt # <--- ADD THIS LINE (For comparison)
 
 # 2. FORBIDDEN ELEMENTS (The "Block List")
 # AI will auto-reject any composition containing these

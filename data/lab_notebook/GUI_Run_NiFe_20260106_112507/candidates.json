@@ -1,0 +1,2 @@
+{"id": "gen1_cand14", "composition": {"Fe": 0.49750385109327394, "Ni": 0.5024961489067261}, "predicted_energy": 1.2465908412933349, "quantum_energy": -0.25005664779471265, "uncertainty": 0.08232954206466675}
+{"id": "gen2_cand16", "composition": {"Fe": 0.49119573811645567, "Ni": 0.5088042618835443}, "predicted_energy": 1.247686255455017, "quantum_energy": -0.3655593055366271, "uncertainty": 0.08238431277275085}

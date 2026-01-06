@@ -1,0 +1,5 @@
+{"id": "gen1_cand7", "composition": {"Fe": 0.4714310233707251, "Ni": 0.5285689766292749}, "predicted_energy": 0.10193477171659471, "quantum_energy": -0.2630991661521567, "uncertainty": 0.025096738585829736}
+{"id": "gen2_cand13", "composition": {"Ni": 0.5842251980794138, "Fe": 0.4157748019205863}, "predicted_energy": 0.10705225515365602, "quantum_energy": -0.3259199997569736, "uncertainty": 0.025352612757682802}
+{"id": "gen3_cand12", "composition": {"Fe": 0.4030631102903043, "Ni": 0.5969368897096956}, "predicted_energy": 0.10161480653285981, "quantum_energy": -0.27281597270663877, "uncertainty": 0.02508074032664299}
+{"id": "gen4_cand5", "composition": {"Ni": 0.504934506402862, "Fe": 0.4950654935971381}, "predicted_energy": 0.09259708571434017, "quantum_energy": -0.36828172143356225, "uncertainty": 0.02462985428571701}
+{"id": "gen5_cand4", "composition": {"Fe": 0.47161591421193017, "Ni": 0.5283840857880697}, "predicted_energy": 0.07629847872257228, "quantum_energy": -0.35588944126627275, "uncertainty": 0.023814923936128614}

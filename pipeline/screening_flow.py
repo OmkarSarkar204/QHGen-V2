@@ -12,18 +12,14 @@ from core.builder.slab_generator import QHSlabGenerator
 from models.surrogate.schnet_engine import QHSurrogateModel
 from models.quantum.azure_wrapper import QuantumValidator
 from core.data.feedback_loop import ActiveLearningManager
-from core.data.logger import ResearchLogger # <--- NEW
-
-# Initialize Logger globally or pass it in (Global for simplicity here)
-LAB_NOTEBOOK = None
+from core.data.logger import ResearchLogger
 
 def run_screening_cycle(generation_id=1, allowed_elements=None, logger=None):
-    print(f"\n--- 🚀 STARTING QHGEN CYCLE: GENERATION {generation_id} ---")
+    print(f"\n--- STARTING QHGEN CYCLE: GENERATION {generation_id} ---")
     
     # 1. Init Tools
     optimizer = QHGenOptimizer()
     builder = QHSlabGenerator()
-    # Quantum Engine (Use Azure if available)
     quantum_engine = QuantumValidator(backend="local_simulator") 
     memory = ActiveLearningManager()
     
@@ -51,51 +47,62 @@ def run_screening_cycle(generation_id=1, allowed_elements=None, logger=None):
         except Exception:
             continue
 
-    if not candidates: return None
+    if not candidates: 
+        print("No valid candidates generated")
+        return None
 
-    # 3. AI Scoring with UNCERTAINTY (The Fix!)
+    # 3. AI Scoring with UNCERTAINTY
     print(">> AI Scoring with Monte Carlo Uncertainty...")
     structures = [c['structure'] for c in candidates]
     
-    # Run MC Dropout
-    means, stds = surrogate.predict_with_uncertainty(structures, num_samples=5)
+    # Run prediction with uncertainty
+    means, stds = surrogate.predict_with_uncertainty(structures, ph_value=7.0)
     
     for i, cand in enumerate(candidates):
         cand['predicted_energy'] = float(means[i])
         cand['uncertainty'] = float(stds[i])
         
-        # Use new exploration-heavy fitness
+        # Use exploration-heavy fitness
         cand['fitness'] = optimizer.calculate_fitness_with_exploration(
             cand['predicted_energy'], 
             cand['uncertainty'],
-            exploration_weight=0.2 # Tune this: Higher = More exploration
+            exploration_weight=0.2
         )
 
-    # 4. Save COMPLETE dataset to Lab Notebook
-    if logger:
-        logger.log_generation(generation_id, candidates)
-
-    # 5. Select Winner (Best Fitness)
+    # 4. Select Winner (Best Fitness)
     candidates.sort(key=lambda x: x['fitness'], reverse=True)
     winner = candidates[0]
     
-    print(f"\n🏆 TOP CANDIDATE: {winner['composition']}")
+    print(f"\n TOP CANDIDATE: {winner['composition']}")
     print(f"   AI Energy: {winner['predicted_energy']:.4f} eV")
-    print(f"   Uncertainty: ±{winner['uncertainty']:.4f} eV") # <--- Visualizing Confidence
+    print(f"   Uncertainty: ±{winner['uncertainty']:.4f} eV")
     
-    # 6. Quantum Truth
+    # 5. Quantum Truth
     from core.quantum.cluster_extractor import ActiveSiteExtractor
     extractor = ActiveSiteExtractor()
     cluster = extractor.extract_cluster(winner['structure'])
     
     result = quantum_engine.validate_candidate(cluster)
-    if result.get('status') == 'FAILED': return None
+    if result.get('status') == 'FAILED': 
+        print(" Quantum validation failed")
+        return None
 
     true_energy = result['vqe_energy']
-    print(f"   Quantum Truth: {true_energy:.4f} eV")
+    print(f"   Quantum Validation: {true_energy:.4f} eV")
     
+    # 6. Log to Lab Notebook - FIX: Pass winner dict, not list
     if logger:
-        logger.log_quantum_result(generation_id, winner['id'], true_energy)
+        logger.log_generation(generation_id, winner)  # Pass single dict, not list
+        
+        # Also log the complete candidate data
+        winner_with_quantum = {
+            'id': winner['id'],
+            'composition': winner['composition'],
+            'predicted_energy': winner['predicted_energy'],
+            'quantum_energy': true_energy,
+            'uncertainty': winner['uncertainty']
+        }
+        logger.log_candidate(winner_with_quantum)
 
     # 7. Active Learning Save
     memory.save_verified_candidate(winner['structure'], true_energy, winner['id'])

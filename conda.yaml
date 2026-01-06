@@ -1,0 +1,22 @@
+name: qhgen-cloud-env
+channels:
+  - conda-forge
+  - pytorch
+dependencies:
+  - python=3.10
+  - pip
+  - pip:
+    - numpy<2.0.0
+    # Pinning Torch to 2.0.1 ensures compatibility with most scientific libraries
+    - torch==2.0.1
+    - torchvision==0.15.2
+    - torchaudio==2.0.2
+    # Force SchNetPack 2.0+ to match the modern API usage in your code
+    - schnetpack>=2.0.0
+    - ase
+    - lmdb
+    - qiskit
+    - azure-quantum
+    - azure-ai-ml
+    - azure-identity
+    - openai
