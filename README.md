@@ -3,7 +3,7 @@
 # QHGen: Quantum–Hybrid Materials Discovery Engine
 
 
-**Team Eigen** | *Digitizing the Periodic Table to Decouple Hydrogen from Critical Scarcity.*
+**Team Eigen**
 
 ---
 
